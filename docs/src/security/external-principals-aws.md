@@ -1,7 +1,6 @@
 ---
 title: Login to lakeFS with AWS IAM Roles
 description: This section covers how to authenticate to lakeFS using AWS IAM.
-status: enterprise
 search:
   boost: 2
 ---
@@ -9,8 +8,7 @@ search:
 # Authenticate to lakeFS with AWS IAM Roles
 
 !!! info
-    Available in **lakeFS Cloud** and **lakeFS Enterprise**<br/>
-    If you're using the open-source version you can check the [pluggable APIs](./rbac.md#pluggable-authentication-and-authorization).
+    Available in **lakeFS OSS**, **lakeFS Cloud**, and **lakeFS Enterprise**
 
 ## Overview 
 
@@ -45,6 +43,39 @@ It's also important to note that Amazon does NOT appear to include any sort of a
 
 
 ## Server Configuration
+
+### lakeFS OSS Configuration
+
+To enable AWS IAM authentication in lakeFS OSS, add the following to your configuration:
+
+```yaml
+auth:
+  iam_auth:
+    enabled: true
+    # Optional: unique identifier for this server (replay protection)
+    server_id: "lakefs-prod-01"
+    # Optional: maximum age for presigned tokens (default: 5m)
+    max_token_age: 5m
+    # Optional: default group for auto-created users
+    default_user_group: "Developers"
+    # Optional: restrict which ARNs can authenticate
+    allowed_arn_patterns:
+      - "arn:aws:iam::123456789012:role/LakeFSUser*"
+      - "arn:aws:sts::123456789012:assumed-role/DataEngineers/*"
+```
+
+| Configuration | Description | Default |
+|---------------|-------------|---------|
+| `auth.iam_auth.enabled` | Enable AWS IAM authentication | `false` |
+| `auth.iam_auth.server_id` | Server ID for replay protection (added to `X-LakeFS-Server-ID` header) | empty |
+| `auth.iam_auth.max_token_age` | Maximum age of presigned STS tokens | `5m` |
+| `auth.iam_auth.default_user_group` | Group to add auto-created users to | `Developers` |
+| `auth.iam_auth.allowed_arn_patterns` | List of ARN patterns that are allowed to authenticate (supports `*` wildcards) | empty (all ARNs allowed) |
+
+!!! note
+    In OSS mode, lakeFS does not have RBAC. All authenticated users have full access to all operations.
+
+### lakeFS Enterprise Configuration
 
 !!! info
     lakeFS Helm chart supports the configuration below since version 1.5.0
