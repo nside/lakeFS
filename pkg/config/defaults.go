@@ -85,6 +85,11 @@ func setBaseDefaults(cfgType string) {
 	viper.SetDefault("auth.oidc.persist_friendly_name", false)
 	viper.SetDefault("auth.cookie_auth_verification.persist_friendly_name", false)
 
+	// IAM authentication defaults
+	viper.SetDefault("auth.iam_auth.enabled", false)
+	viper.SetDefault("auth.iam_auth.max_token_age", 5*time.Minute)
+	viper.SetDefault("auth.iam_auth.default_user_group", "Developers")
+
 	viper.SetDefault("committed.local_cache.size_bytes", 1*1024*1024*1024)
 	viper.SetDefault("committed.local_cache.dir", "~/lakefs/data/cache")
 	viper.SetDefault("committed.local_cache.max_uploaders_per_writer", 10)

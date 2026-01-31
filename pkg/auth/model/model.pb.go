@@ -697,6 +697,70 @@ func (x *UIData) GetRepositories() *RepositoriesData {
 	return nil
 }
 
+// message data model for external principal (e.g., AWS IAM role/user ARN)
+type ExternalPrincipalData struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The external principal ID (e.g., AWS ARN)
+	PrincipalId string `protobuf:"bytes,1,opt,name=principal_id,json=principalId,proto3" json:"principal_id,omitempty"`
+	// The lakeFS user ID that this principal maps to
+	UserId string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	// When this mapping was created
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ExternalPrincipalData) Reset() {
+	*x = ExternalPrincipalData{}
+	mi := &file_auth_model_model_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExternalPrincipalData) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExternalPrincipalData) ProtoMessage() {}
+
+func (x *ExternalPrincipalData) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_model_model_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExternalPrincipalData.ProtoReflect.Descriptor instead.
+func (*ExternalPrincipalData) Descriptor() ([]byte, []int) {
+	return file_auth_model_model_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *ExternalPrincipalData) GetPrincipalId() string {
+	if x != nil {
+		return x.PrincipalId
+	}
+	return ""
+}
+
+func (x *ExternalPrincipalData) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *ExternalPrincipalData) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
 var File_auth_model_model_proto protoreflect.FileDescriptor
 
 const file_auth_model_model_proto_rawDesc = "" +
@@ -765,7 +829,12 @@ const file_auth_model_model_proto_rawDesc = "" +
 	"\n" +
 	"permission\x18\x01 \x01(\tR\n" +
 	"permission\x12T\n" +
-	"\frepositories\x18\x02 \x01(\v20.io.treeverse.lakefs.auth.model.RepositoriesDataR\frepositoriesB(Z&github.com/treeverse/lakefs/auth/modelb\x06proto3"
+	"\frepositories\x18\x02 \x01(\v20.io.treeverse.lakefs.auth.model.RepositoriesDataR\frepositories\"\x8e\x01\n" +
+	"\x15ExternalPrincipalData\x12!\n" +
+	"\fprincipal_id\x18\x01 \x01(\tR\vprincipalId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x129\n" +
+	"\n" +
+	"created_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAtB(Z&github.com/treeverse/lakefs/auth/modelb\x06proto3"
 
 var (
 	file_auth_model_model_proto_rawDescOnce sync.Once
@@ -779,7 +848,7 @@ func file_auth_model_model_proto_rawDescGZIP() []byte {
 	return file_auth_model_model_proto_rawDescData
 }
 
-var file_auth_model_model_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_auth_model_model_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_auth_model_model_proto_goTypes = []any{
 	(*UserData)(nil),              // 0: io.treeverse.lakefs.auth.model.UserData
 	(*GroupData)(nil),             // 1: io.treeverse.lakefs.auth.model.GroupData
@@ -792,28 +861,30 @@ var file_auth_model_model_proto_goTypes = []any{
 	(*TokenData)(nil),             // 8: io.treeverse.lakefs.auth.model.TokenData
 	(*RepositoriesData)(nil),      // 9: io.treeverse.lakefs.auth.model.RepositoriesData
 	(*UIData)(nil),                // 10: io.treeverse.lakefs.auth.model.UIData
-	nil,                           // 11: io.treeverse.lakefs.auth.model.StatementData.ConditionEntry
-	nil,                           // 12: io.treeverse.lakefs.auth.model.ConditionOperator.FieldsEntry
-	(*timestamppb.Timestamp)(nil), // 13: google.protobuf.Timestamp
+	(*ExternalPrincipalData)(nil), // 11: io.treeverse.lakefs.auth.model.ExternalPrincipalData
+	nil,                           // 12: io.treeverse.lakefs.auth.model.StatementData.ConditionEntry
+	nil,                           // 13: io.treeverse.lakefs.auth.model.ConditionOperator.FieldsEntry
+	(*timestamppb.Timestamp)(nil), // 14: google.protobuf.Timestamp
 }
 var file_auth_model_model_proto_depIdxs = []int32{
-	13, // 0: io.treeverse.lakefs.auth.model.UserData.created_at:type_name -> google.protobuf.Timestamp
-	13, // 1: io.treeverse.lakefs.auth.model.GroupData.created_at:type_name -> google.protobuf.Timestamp
-	13, // 2: io.treeverse.lakefs.auth.model.PolicyData.created_at:type_name -> google.protobuf.Timestamp
+	14, // 0: io.treeverse.lakefs.auth.model.UserData.created_at:type_name -> google.protobuf.Timestamp
+	14, // 1: io.treeverse.lakefs.auth.model.GroupData.created_at:type_name -> google.protobuf.Timestamp
+	14, // 2: io.treeverse.lakefs.auth.model.PolicyData.created_at:type_name -> google.protobuf.Timestamp
 	5,  // 3: io.treeverse.lakefs.auth.model.PolicyData.statements:type_name -> io.treeverse.lakefs.auth.model.StatementData
 	2,  // 4: io.treeverse.lakefs.auth.model.PolicyData.acl:type_name -> io.treeverse.lakefs.auth.model.ACLData
-	13, // 5: io.treeverse.lakefs.auth.model.CredentialData.issued_date:type_name -> google.protobuf.Timestamp
-	11, // 6: io.treeverse.lakefs.auth.model.StatementData.condition:type_name -> io.treeverse.lakefs.auth.model.StatementData.ConditionEntry
-	12, // 7: io.treeverse.lakefs.auth.model.ConditionOperator.fields:type_name -> io.treeverse.lakefs.auth.model.ConditionOperator.FieldsEntry
-	13, // 8: io.treeverse.lakefs.auth.model.TokenData.expired_at:type_name -> google.protobuf.Timestamp
+	14, // 5: io.treeverse.lakefs.auth.model.CredentialData.issued_date:type_name -> google.protobuf.Timestamp
+	12, // 6: io.treeverse.lakefs.auth.model.StatementData.condition:type_name -> io.treeverse.lakefs.auth.model.StatementData.ConditionEntry
+	13, // 7: io.treeverse.lakefs.auth.model.ConditionOperator.fields:type_name -> io.treeverse.lakefs.auth.model.ConditionOperator.FieldsEntry
+	14, // 8: io.treeverse.lakefs.auth.model.TokenData.expired_at:type_name -> google.protobuf.Timestamp
 	9,  // 9: io.treeverse.lakefs.auth.model.UIData.repositories:type_name -> io.treeverse.lakefs.auth.model.RepositoriesData
-	6,  // 10: io.treeverse.lakefs.auth.model.StatementData.ConditionEntry.value:type_name -> io.treeverse.lakefs.auth.model.ConditionOperator
-	7,  // 11: io.treeverse.lakefs.auth.model.ConditionOperator.FieldsEntry.value:type_name -> io.treeverse.lakefs.auth.model.StringList
-	12, // [12:12] is the sub-list for method output_type
-	12, // [12:12] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	14, // 10: io.treeverse.lakefs.auth.model.ExternalPrincipalData.created_at:type_name -> google.protobuf.Timestamp
+	6,  // 11: io.treeverse.lakefs.auth.model.StatementData.ConditionEntry.value:type_name -> io.treeverse.lakefs.auth.model.ConditionOperator
+	7,  // 12: io.treeverse.lakefs.auth.model.ConditionOperator.FieldsEntry.value:type_name -> io.treeverse.lakefs.auth.model.StringList
+	13, // [13:13] is the sub-list for method output_type
+	13, // [13:13] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_auth_model_model_proto_init() }
@@ -827,7 +898,7 @@ func file_auth_model_model_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_auth_model_model_proto_rawDesc), len(file_auth_model_model_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

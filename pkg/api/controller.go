@@ -813,11 +813,28 @@ func (c *Controller) ExternalPrincipalLogin(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	c.Logger.WithField("external_principal_id", externalPrincipal.Id).Debug("external principal login success, trying to get external principal ID info")
+
+	// Try to get the external principal binding
 	externalPrincipalIDInfo, err := c.Auth.GetExternalPrincipal(ctx, externalPrincipal.Id)
-	if c.handleAPIError(ctx, w, r, err) {
-		c.Logger.WithField("external_principal_id", externalPrincipal.Id).WithError(err).Error("failed to get external principal ID info")
-		return
+	if err != nil {
+		// If not found and IAM auth is enabled in basic mode, try auto-binding
+		if errors.Is(err, auth.ErrNotFound) && c.Config.AuthConfig().GetBaseAuthConfig().IAMAuth.Enabled {
+			c.Logger.WithField("external_principal_id", externalPrincipal.Id).Debug("external principal not found, attempting auto-bind in basic auth mode")
+			externalPrincipalIDInfo, err = c.autoBindExternalPrincipal(ctx, externalPrincipal.Id)
+			if err != nil {
+				c.Logger.WithField("external_principal_id", externalPrincipal.Id).WithError(err).Error("failed to auto-bind external principal")
+				if c.handleAPIError(ctx, w, r, err) {
+					return
+				}
+				writeError(w, r, http.StatusInternalServerError, "failed to bind external principal")
+				return
+			}
+		} else if c.handleAPIError(ctx, w, r, err) {
+			c.Logger.WithField("external_principal_id", externalPrincipal.Id).WithError(err).Error("failed to get external principal ID info")
+			return
+		}
 	}
+
 	c.Logger.WithField("user_id", externalPrincipalIDInfo.UserID).Debug("got external principal ID info, generating a new JWT")
 	duration := c.Config.AuthConfig().GetBaseAuthConfig().LoginDuration
 	if swag.IntValue(body.TokenExpirationDuration) > 0 {
@@ -841,6 +858,40 @@ func (c *Controller) ExternalPrincipalLogin(w http.ResponseWriter, r *http.Reque
 		TokenExpiration: swag.Int64(expires.Unix()),
 	}
 	writeResponse(w, r, http.StatusOK, response)
+}
+
+// autoBindExternalPrincipal automatically binds an external principal to a user
+// In basic auth mode, it binds to the single admin user
+func (c *Controller) autoBindExternalPrincipal(ctx context.Context, principalID string) (*model.ExternalPrincipal, error) {
+	// List users to find the admin user (in basic mode there's only one)
+	users, _, err := c.Auth.ListUsers(ctx, &model.PaginationParams{Amount: 1})
+	if err != nil {
+		return nil, fmt.Errorf("list users: %w", err)
+	}
+	if len(users) == 0 {
+		return nil, fmt.Errorf("no users found to bind external principal")
+	}
+
+	adminUser := users[0]
+	c.Logger.WithFields(logging.Fields{
+		"external_principal_id": principalID,
+		"user":                  adminUser.Username,
+	}).Info("auto-binding external principal to user")
+
+	// Create the binding
+	err = c.Auth.CreateUserExternalPrincipal(ctx, adminUser.Username, principalID)
+	if err != nil {
+		// If it already exists, that's fine - just fetch it
+		if errors.Is(err, auth.ErrAlreadyExists) {
+			return c.Auth.GetExternalPrincipal(ctx, principalID)
+		}
+		return nil, fmt.Errorf("create external principal: %w", err)
+	}
+
+	return &model.ExternalPrincipal{
+		ID:     principalID,
+		UserID: adminUser.Username,
+	}, nil
 }
 
 func (c *Controller) StsLogin(w http.ResponseWriter, r *http.Request, body apigen.StsLoginJSONRequestBody) {
