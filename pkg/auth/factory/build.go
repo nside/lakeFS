@@ -37,11 +37,17 @@ func NewAuthService(ctx context.Context, cfg config.Config, logger logging.Logge
 
 	secretStore := crypt.NewSecretStore([]byte(baseAuthCfg.Encrypt.SecretKey))
 	if authUICfg.IsAuthBasic() {
-		apiService := auth.NewBasicAuthService(
+		// Configure IAM auth if enabled
+		iamConfig := auth.IAMAuthConfig{
+			Enabled:          baseAuthCfg.IAMAuth.Enabled,
+			DefaultUserGroup: baseAuthCfg.IAMAuth.DefaultUserGroup,
+		}
+		apiService := auth.NewBasicAuthServiceWithIAMAuth(
 			kvStore,
 			secretStore,
 			authparams.ServiceCache(baseAuthCfg.Cache),
 			logger.WithField("service", "auth_service"),
+			iamConfig,
 		)
 		// Check if migration needed
 		initialized, err := metadataManager.IsInitialized(ctx)

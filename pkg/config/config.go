@@ -674,6 +674,20 @@ const (
 	gcpAESKeyLength = 32
 )
 
+// IAMAuth configures AWS IAM authentication for lakeFS
+type IAMAuth struct {
+	// Enabled enables AWS IAM authentication
+	Enabled bool `mapstructure:"enabled"`
+	// ServerID is a unique identifier for this lakeFS server, used for replay protection
+	ServerID string `mapstructure:"server_id"`
+	// MaxTokenAge is the maximum age of a presigned STS token (default: 5m)
+	MaxTokenAge time.Duration `mapstructure:"max_token_age"`
+	// DefaultUserGroup is the group to add auto-created users to
+	DefaultUserGroup string `mapstructure:"default_user_group"`
+	// AllowedARNPatterns restricts which AWS ARNs can authenticate (optional)
+	AllowedARNPatterns []string `mapstructure:"allowed_arn_patterns"`
+}
+
 type BaseAuth struct {
 	Cache struct {
 		Enabled bool          `mapstructure:"enabled"`
@@ -710,6 +724,7 @@ type BaseAuth struct {
 	} `mapstructure:"remote_authenticator"`
 	OIDC                   OIDC                   `mapstructure:"oidc"`
 	CookieAuthVerification CookieAuthVerification `mapstructure:"cookie_auth_verification"`
+	IAMAuth                IAMAuth                `mapstructure:"iam_auth"`
 	// LogoutRedirectURL is the URL on which to mount the
 	// server-side logout.
 	LogoutRedirectURL string        `mapstructure:"logout_redirect_url"`
@@ -788,9 +803,15 @@ func (b *BaseAuth) IsAuthTypeAPI() bool {
 }
 
 func (b *BaseAuth) IsExternalPrincipalsEnabled() bool {
-	// IsAuthTypeAPI must be true since the local auth service doesn't support external principals
-	// ExternalPrincipalsEnabled indicates that the remote auth service enables external principals support since its optional extension
-	return b.AuthenticationAPI.ExternalPrincipalsEnabled
+	// External principals are enabled if:
+	// 1. Using external authentication API with external principals enabled, OR
+	// 2. IAM authentication is enabled (for basic auth mode)
+	return b.AuthenticationAPI.ExternalPrincipalsEnabled || b.IAMAuth.Enabled
+}
+
+// IsIAMAuthEnabled returns true if IAM authentication is enabled
+func (b *BaseAuth) IsIAMAuthEnabled() bool {
+	return b.IAMAuth.Enabled
 }
 
 func (u *AuthUIConfig) IsAuthBasic() bool {

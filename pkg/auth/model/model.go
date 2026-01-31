@@ -18,18 +18,20 @@ import (
 )
 
 const (
-	StatementEffectAllow   = "allow"
-	StatementEffectDeny    = "deny"
-	PartitionKey           = "auth"
-	groupsPrefix           = "groups"
-	groupsUsersPrefix      = "gUsers"
-	groupsPoliciesPrefix   = "gPolicies"
-	usersPrefix            = "users"
-	policiesPrefix         = "policies"
-	usersPoliciesPrefix    = "uPolicies"
-	usersCredentialsPrefix = "uCredentials" // #nosec G101 -- False positive: this is only a kv key prefix
-	credentialsPrefix      = "credentials"
-	metadataPrefix         = "installation_metadata"
+	StatementEffectAllow         = "allow"
+	StatementEffectDeny          = "deny"
+	PartitionKey                 = "auth"
+	groupsPrefix                 = "groups"
+	groupsUsersPrefix            = "gUsers"
+	groupsPoliciesPrefix         = "gPolicies"
+	usersPrefix                  = "users"
+	policiesPrefix               = "policies"
+	usersPoliciesPrefix          = "uPolicies"
+	usersCredentialsPrefix       = "uCredentials" // #nosec G101 -- False positive: this is only a kv key prefix
+	credentialsPrefix            = "credentials"
+	metadataPrefix               = "installation_metadata"
+	externalPrincipalsPrefix     = "extPrincipals"
+	userExternalPrincipalsPrefix = "uExtPrincipals"
 )
 
 //nolint:gochecknoinits
@@ -43,6 +45,17 @@ func init() {
 	kv.MustRegisterType("auth", kv.FormatPath("uPolicies", "*", "policies"), (&kv.SecondaryIndex{}).ProtoReflect().Type())
 	kv.MustRegisterType("auth", "expiredTokens", (&TokenData{}).ProtoReflect().Type())
 	kv.MustRegisterType("auth", "installation_metadata", nil)
+	// External principals (e.g., AWS IAM ARNs)
+	kv.MustRegisterType("auth", externalPrincipalsPrefix, (&ExternalPrincipalData{}).ProtoReflect().Type())
+	kv.MustRegisterType("auth", kv.FormatPath(userExternalPrincipalsPrefix, "*", externalPrincipalsPrefix), (&kv.SecondaryIndex{}).ProtoReflect().Type())
+
+	// BasicAuth partition type registrations (for BasicAuthService)
+	const basicAuthPartition = "basicAuth"
+	kv.MustRegisterType(basicAuthPartition, usersPrefix, (&UserData{}).ProtoReflect().Type())
+	kv.MustRegisterType(basicAuthPartition, kv.FormatPath("uCredentials", "*", "credentials"), (&CredentialData{}).ProtoReflect().Type())
+	kv.MustRegisterType(basicAuthPartition, "credentialsIndex", (&kv.SecondaryIndex{}).ProtoReflect().Type())
+	kv.MustRegisterType(basicAuthPartition, externalPrincipalsPrefix, (&ExternalPrincipalData{}).ProtoReflect().Type())
+	kv.MustRegisterType(basicAuthPartition, kv.FormatPath(userExternalPrincipalsPrefix, "*", externalPrincipalsPrefix), (&kv.SecondaryIndex{}).ProtoReflect().Type())
 }
 
 func UserPath(userName string) []byte {
@@ -75,6 +88,16 @@ func GroupPolicyPath(groupDisplayName string, policyDisplayName string) []byte {
 
 func MetadataKeyPath(key string) string {
 	return kv.FormatPath(metadataPrefix, key)
+}
+
+// ExternalPrincipalPath returns the KV path for an external principal by its ID
+func ExternalPrincipalPath(principalID string) []byte {
+	return []byte(kv.FormatPath(externalPrincipalsPrefix, principalID))
+}
+
+// UserExternalPrincipalPath returns the KV path for a user's external principal mapping
+func UserExternalPrincipalPath(userID, principalID string) []byte {
+	return []byte(kv.FormatPath(userExternalPrincipalsPrefix, userID, externalPrincipalsPrefix, principalID))
 }
 
 var ErrInvalidStatementSrcFormat = errors.New("invalid statements src format")
@@ -447,4 +470,21 @@ func EncryptSecret(s crypt.SecretStore, secretAccessKey string) ([]byte, error) 
 
 func CreateID() string {
 	return uuid.New().String()
+}
+
+// ExternalPrincipalFromProto converts ExternalPrincipalData to ExternalPrincipal
+func ExternalPrincipalFromProto(pb *ExternalPrincipalData) *ExternalPrincipal {
+	return &ExternalPrincipal{
+		ID:     pb.PrincipalId,
+		UserID: pb.UserId,
+	}
+}
+
+// ProtoFromExternalPrincipal converts ExternalPrincipal to ExternalPrincipalData
+func ProtoFromExternalPrincipal(ep *ExternalPrincipal) *ExternalPrincipalData {
+	return &ExternalPrincipalData{
+		PrincipalId: ep.ID,
+		UserId:      ep.UserID,
+		CreatedAt:   timestamppb.Now(),
+	}
 }

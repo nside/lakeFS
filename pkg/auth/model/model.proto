@@ -82,3 +82,13 @@ message UIData {
   string permission = 1;
   RepositoriesData repositories = 2;
 }
+
+// message data model for external principal (e.g., AWS IAM role/user ARN)
+message ExternalPrincipalData {
+  // The external principal ID (e.g., AWS ARN)
+  string principal_id = 1;
+  // The lakeFS user ID that this principal maps to
+  string user_id = 2;
+  // When this mapping was created
+  google.protobuf.Timestamp created_at = 3;
+}
